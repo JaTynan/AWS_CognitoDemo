@@ -32,8 +32,7 @@
             const cognitoAuthUrl = `${USER_POOL_DOMAIN}/login?` +
                 `client_id=${APP_CLIENT_ID}&` +
                 `response_type=code&scope=email+openid+phone&` + // Requesting standard scopes
-                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&`
             window.location.href = cognitoAuthUrl;
         }
 
