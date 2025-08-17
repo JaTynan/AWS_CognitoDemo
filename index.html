@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Classifier Dashboard</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 bg-gradient-to-br from-gray-900 via-slate-950 to-gray-900 text-gray-100 flex items-center justify-center p-4">
+
+    <div id="app-container" class="max-w-4xl w-full">
+        <!-- Content will be injected here by JavaScript -->
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const USER_POOL_DOMAIN = 'https://us-east-1vzbitll45.auth.us-east-1.amazoncognito.com';
+        const APP_CLIENT_ID = '7fk5l1hgvr12dmq37ghd5om7aj';
+        const REDIRECT_URI = 'https://main.d2vaur11pkbqgh.amplifyapp.com/'; // Amplify URL
+
+        // --- AUTHENTICATION LOGIC ---
+        
+        // This function builds the URL to redirect to the Cognito Hosted UI
+        function redirectToCognito() {
+            const cognitoAuthUrl = `https://${USER_POOL_DOMAIN}/login?` +
+                `response_type=token&` +
+                `client_id=${APP_CLIENT_ID}&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `scope=openid%20profile%20email`; // Requesting standard scopes
+
+            window.location.href = cognitoAuthUrl;
+        }
+
+        // This function checks the URL for tokens after a login redirect
+        function parseTokensFromUrl() {
+            const urlHash = window.location.hash.substring(1);
+            const params = new URLSearchParams(urlHash);
+            const accessToken = params.get('access_token');
+            const idToken = params.get('id_token');
+            
+            if (accessToken && idToken) {
+                // For this demo, we'll store the token in session storage
+                // and display the main dashboard.
+                sessionStorage.setItem('cognito_access_token', accessToken);
+                sessionStorage.setItem('cognito_id_token', idToken);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return { accessToken, idToken };
+            }
+            return null;
+        }
+
+        // Check for existing session or a new login redirect on page load
+        function initializeApp() {
+            const tokens = parseTokensFromUrl();
+            const storedAccessToken = sessionStorage.getItem('cognito_access_token');
+            const appContainer = document.getElementById('app-container');
+
+            if (tokens || storedAccessToken) {
+                // User is authenticated, show the dashboard
+                const username = "User"; // A real app would get this from the token
+                appContainer.innerHTML = `
+                    <header class="w-full mb-8 p-4 bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-slate-700 flex justify-between items-center">
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-100">
+                            Report Classifier Dashboard
+                        </h1>
+                        <button onclick="handleLogout()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200">
+                            Sign Out
+                        </button>
+                    </header>
+                    <main class="w-full space-y-8">
+                        <div class="p-6 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">
+                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-gray-50">
+                                    Welcome, ${username}!
+                                </span>
+                            </h2>
+                            <p class="text-gray-300">
+                                You are now logged in. This is your personal AI dashboard. Here, you can upload reports and logs for classification against the MITRE ATT&CK framework.
+                            </p>
+                        </div>
+                        <div class="p-6 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700">
+                            <div class="flex flex-col gap-4">
+                                <h3 class="text-xl font-bold text-gray-100 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-blue-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-10.5a1.5 1.5 0 012.1 2.1l-10.5 10.5m-7.5 7.5h16.5m-9-6.75h6" />
+                                    </svg>
+                                    AI Report Classifier
+                                </h3>
+                                <p class="text-gray-400">
+                                    Upload your security reports or system logs to get an automated classification based on the MITRE ATT&CK framework. Our AI model will provide a confidence score for each identified technique.
+                                </p>
+                                <button class="mt-4 w-full sm:w-auto px-6 py-3 font-semibold rounded-lg shadow-lg bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 transform hover:scale-105">
+                                    Analyze New Report
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                `;
+            } else {
+                // User is not authenticated, show the login page
+                appContainer.innerHTML = `
+                    <main class="w-full space-y-8 flex flex-col items-center justify-center text-center">
+                        <div class="p-8 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-4">
+                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-gray-50">
+                                    Report Classifier
+                                </span>
+                            </h2>
+                            <p class="text-gray-300 mb-6">
+                                Please sign in to access your personal AI dashboard.
+                            </p>
+                            <button onclick="redirectToCognito()" class="px-8 py-4 font-semibold rounded-lg shadow-lg bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transition-all duration-300 transform hover:scale-105">
+                                Sign In
+                            </button>
+                        </div>
+                    </main>
+                `;
+            }
+        }
+
+        // This function handles the logout logic
+        function handleLogout() {
+            sessionStorage.clear();
+            window.location.reload(); // Reload the page to show the login view
+        }
+
+        // Run the initialization logic when the page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+
+</body>
+</html>
