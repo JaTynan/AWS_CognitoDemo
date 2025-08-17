@@ -30,10 +30,9 @@
         // This function builds the URL to redirect to the Cognito Hosted UI
         function redirectToCognito() {
             const cognitoAuthUrl = `${USER_POOL_DOMAIN}/login?` +
-                `response_type=token&` +
                 `client_id=${APP_CLIENT_ID}&` +
+                `response_type=code&scope=email+openid+phone&` + // Requesting standard scopes
                 `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
-                `scope=openid%20profile%20email`; // Requesting standard scopes
 
             window.location.href = cognitoAuthUrl;
         }
